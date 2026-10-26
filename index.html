@@ -1,12 +1,158 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Document</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Website</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Arial,sans-serif;
+  background:linear-gradient(135deg,#10172e,#253e70);
+  color:white;min-height:100vh
+}
+nav{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:18px;background:#111a30
+}
+.logo{font-size:22px;font-weight:bold;color:#75a7ff}
+button{
+  padding:12px 18px;border:0;border-radius:9px;
+  background:#477bff;color:white;font-weight:bold;
+  cursor:pointer
+}
+nav button{padding:9px 12px}
+.container{
+  width:90%;max-width:420px;margin:55px auto;
+  background:#17233e;padding:25px;border-radius:18px;
+  box-shadow:0 10px 35px #0005
+}
+h1{text-align:center}
+p{text-align:center;color:#bdcbea;line-height:1.6}
+input{
+  display:block;width:100%;padding:13px;margin:12px 0;
+  border:1px solid #435477;border-radius:9px;
+  background:#0d172b;color:white;font-size:16px
+}
+.full{width:100%;margin-top:10px}
+a{color:#8eb5ff;cursor:pointer}
+.hidden{display:none}
+.hero{text-align:center;padding-top:35px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:25px}
+.card{background:#233455;padding:18px;border-radius:12px;text-align:center}
+.message{text-align:center;color:#ffcc8b;font-size:14px}
+</style>
 </head>
 <body>
-   <input type="text" placeholder="moblie number or email" required>
-   <div><inpu type="text" placeholder="password" required></div>
+
+<nav>
+  <div class="logo">MyWebsite</div>
+  <button onclick="showPage('home')">Home</button>
+</nav>
+
+<!-- LOGIN PAGE -->
+<section id="login" class="container">
+  <h1>Welcome Back 👋</h1>
+  <p>তোমার অ্যাকাউন্টে Login করো</p>
+  <form id="loginForm">
+    <input id="loginUser" placeholder="Username" required>
+    <input id="loginPass" type="password" placeholder="Password" required>
+    <button class="full" type="submit">Login</button>
+  </form>
+  <p>অ্যাকাউন্ট নেই? <a onclick="showPage('register')">Register করো</a></p>
+  <div id="loginMsg" class="message"></div>
+</section>
+
+<!-- REGISTER PAGE -->
+<section id="register" class="container hidden">
+  <h1>Create Account ✨</h1>
+  <p>নতুন অ্যাকাউন্ট তৈরি করো</p>
+  <form id="registerForm">
+    <input id="regUser" placeholder="Username" required minlength="3">
+    <input id="regEmail" type="email" placeholder="Email" required>
+    <input id="regPass" type="password" placeholder="Password (কমপক্ষে ৬ অক্ষর)" required minlength="6">
+    <button class="full" type="submit">Register</button>
+  </form>
+  <p>আগে অ্যাকাউন্ট আছে? <a onclick="showPage('login')">Login করো</a></p>
+  <div id="registerMsg" class="message"></div>
+</section>
+
+<!-- MAIN PAGE -->
+<section id="home" class="container hidden">
+  <div class="hero">
+    <h1>My Main Page 🚀</h1>
+    <p id="welcomeText">তোমার নিজের ওয়েবসাইটে স্বাগতম!</p>
+  </div>
+  <div class="cards">
+    <div class="card">👤<h3>Profile</h3><p>তোমার অ্যাকাউন্ট</p></div>
+    <div class="card">🌐<h3>Website</h3><p>তোমার ডিজিটাল জগৎ</p></div>
+  </div>
+  <button class="full" onclick="logout()">Logout</button>
+</section>
+
+<script>
+function showPage(page){
+  document.querySelectorAll('section').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(page).classList.remove('hidden');
+}
+
+function getUsers(){
+  try{return JSON.parse(localStorage.getItem('demoUsers')||'[]')}
+  catch(e){return []}
+}
+
+document.getElementById('registerForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  const username=document.getElementById('regUser').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const password=document.getElementById('regPass').value;
+  const users=getUsers();
+
+  if(users.some(u=>u.username.toLowerCase()===username.toLowerCase())){
+    document.getElementById('registerMsg').textContent='এই Username আগে ব্যবহার করা হয়েছে।';
+    return;
+  }
+
+  users.push({username,email,password});
+  localStorage.setItem('demoUsers',JSON.stringify(users));
+  document.getElementById('registerMsg').textContent='Account তৈরি হয়েছে! এখন Login করো।';
+  document.getElementById('registerForm').reset();
+  setTimeout(()=>showPage('login'),700);
+});
+
+document.getElementById('loginForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  const username=document.getElementById('loginUser').value.trim();
+  const password=document.getElementById('loginPass').value;
+  const user=getUsers().find(u=>
+    u.username.toLowerCase()===username.toLowerCase()&&u.password===password
+  );
+
+  if(!user){
+    document.getElementById('loginMsg').textContent='Username অথবা Password ভুল।';
+    return;
+  }
+
+  sessionStorage.setItem('demoCurrentUser',user.username);
+  document.getElementById('welcomeText').textContent='স্বাগতম, '+user.username+'!';
+  document.getElementById('loginMsg').textContent='';
+  showPage('home');
+});
+
+function logout(){
+  sessionStorage.removeItem('demoCurrentUser');
+  document.getElementById('loginForm').reset();
+  showPage('login');
+}
+
+const current=sessionStorage.getItem('demoCurrentUser');
+if(current){
+  document.getElementById('welcomeText').textContent='স্বাগতম, '+current+'!';
+  showPage('home');
+}else{
+  showPage('login');
+}
+</script>
 </body>
 </html>
