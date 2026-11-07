@@ -1,380 +1,243 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Real Forest Run 3D</title>
+<title>Forest 3D Car Racing</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;overflow:hidden;background:#80cfff;font-family:Arial;touch-action:none}
+body{margin:0;overflow:hidden;background:#75cfff;font-family:Arial;touch-action:none}
 canvas{display:block}
-#hud{position:absolute;top:10px;left:2%;width:96%;display:flex;justify-content:space-around;background:#063e53dd;color:white;padding:12px 2px;border-radius:12px;font-size:12px;font-weight:bold}
-#hud span{display:block;color:#ffe34b;font-size:19px;margin-top:5px}
-button{border:0;border-radius:13px;padding:17px 23px;background:#087ba9;color:white;font-size:20px;font-weight:bold}
+#hud{position:absolute;top:10px;width:96%;left:2%;display:flex;justify-content:space-around;background:#123e35dd;color:white;padding:12px 2px;border-radius:12px;font-size:12px}
+#hud span{display:block;color:#ffe33d;font-size:19px;margin-top:5px}
 #controls{position:absolute;bottom:20px;width:100%;display:flex;justify-content:space-between;padding:0 15px}
-#jump{background:#ff851a}
-#pause{position:absolute;right:12px;top:83px;padding:10px;font-size:14px}
-#over{display:none;position:absolute;top:35%;left:10%;width:80%;background:#102f27;color:white;text-align:center;padding:25px;border-radius:15px}
-#over button{background:#ff851a}
-#loading{position:absolute;top:48%;width:100%;text-align:center;color:#063e53;font-weight:bold}
+button{padding:17px 22px;border:0;border-radius:12px;background:#087ba9;color:white;font-size:20px;font-weight:bold}
+#brake{background:#d93636}
+#pause{position:absolute;right:12px;top:82px;padding:10px;font-size:14px}
+#over{display:none;position:absolute;top:36%;left:10%;width:80%;background:#123e35;color:white;text-align:center;padding:20px;border-radius:15px}
+#over button{background:#ff8c19}
 </style>
 </head>
 <body>
 
 <div id="hud">
 <div>SCORE<span id="score">0</span></div>
-<div>DISTANCE<span id="distance">0 m</span></div>
+<div>DISTANCE<span id="distance">0</span></div>
 <div>COINS<span id="coins">0</span></div>
-<div>SPEED<span id="speed">20</span></div>
+<div>SPEED<span id="speed">0</span></div>
 </div>
 
-<button id="pause">Ⅱ PAUSE</button>
+<button id="pause">Ⅱ</button>
 
 <div id="controls">
 <div>
 <button id="left">◀</button>
 <button id="right">▶</button>
 </div>
-<button id="jump">JUMP ↑</button>
+<button id="brake">BRAKE</button>
 </div>
 
-<div id="loading">Loading Forest World...</div>
-
 <div id="over">
-<h1>GAME OVER!</h1>
+<h1>CRASH!</h1>
 <h2>Score: <span id="final">0</span></h2>
 <button onclick="restart()">RESTART</button>
 </div>
 
 <script type="importmap">
-{
- "imports":{
- "three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
- "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
- }
-}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}
 </script>
 
 <script type="module">
 import * as THREE from "three";
-import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x8bd8ff);
-scene.fog=new THREE.Fog(0x8bd8ff,35,125);
+scene.background=new THREE.Color(0x80d5ff);
+scene.fog=new THREE.Fog(0x80d5ff,35,130);
 
-const camera=new THREE.PerspectiveCamera(
-65,innerWidth/innerHeight,.1,200
-);
-camera.position.set(0,5,9);
-camera.lookAt(0,1,-8);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,200);
+camera.position.set(0,6,11);
+camera.lookAt(0,1,-10);
 
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.15;
 document.body.appendChild(renderer.domElement);
 
-// Lighting
-scene.add(new THREE.HemisphereLight(0xc8eaff,0x42612d,2));
+scene.add(new THREE.HemisphereLight(0xffffff,0x45602b,2));
 
-const sunlight=new THREE.DirectionalLight(0xfff0d0,3);
-sunlight.position.set(-15,25,12);
-sunlight.castShadow=true;
-sunlight.shadow.mapSize.set(1024,1024);
-scene.add(sunlight);
+const sun=new THREE.DirectionalLight(0xffffff,2.5);
+sun.position.set(-10,20,10);
+sun.castShadow=true;
+scene.add(sun);
 
-const mat=(c)=>new THREE.MeshStandardMaterial({color:c});
+const material=c=>new THREE.MeshStandardMaterial({color:c});
 
-const grass=mat(0x438b3c);
-const dirt=mat(0x98704b);
-const bark=mat(0x56351e);
-const green1=mat(0x126b32);
-const green2=mat(0x258d40);
-const green3=mat(0x3c9b43);
+const green=material(0x318d38);
+const roadMat=material(0x68645c);
+const white=material(0xffffff);
+const brown=material(0x57351b);
+const leaves=material(0x167239);
 
-function box(x,y,z,w,h,d,material){
- const m=new THREE.Mesh(
-  new THREE.BoxGeometry(w,h,d),material
- );
+function box(x,y,z,w,h,d,mat,parent=scene){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
  m.position.set(x,y,z);
  m.castShadow=true;
  m.receiveShadow=true;
- scene.add(m);
+ parent.add(m);
  return m;
 }
 
-// Procedural ground texture
-function makeTexture(){
- const c=document.createElement("canvas");
- c.width=c.height=256;
- const ctx=c.getContext("2d");
- ctx.fillStyle="#98734e";
- ctx.fillRect(0,0,256,256);
- for(let i=0;i<2500;i++){
-  ctx.fillStyle=Math.random()>.5?"#80603f":"#b18b60";
-  ctx.globalAlpha=Math.random()*.35;
-  ctx.fillRect(Math.random()*256,Math.random()*256,2,2);
- }
- ctx.globalAlpha=1;
- const t=new THREE.CanvasTexture(c);
- t.wrapS=t.wrapT=THREE.RepeatWrapping;
- t.repeat.set(1,20);
- return t;
-}
-
-// Ground and road
-const ground=new THREE.Mesh(
- new THREE.PlaneGeometry(250,250),grass
-);
+// Ground
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,220),green);
 ground.rotation.x=-Math.PI/2;
-ground.position.set(0,-.15,-80);
-ground.receiveShadow=true;
+ground.position.set(0,-.1,-80);
 scene.add(ground);
 
-const roadMaterial=new THREE.MeshStandardMaterial({
- map:makeTexture(),roughness:1
-});
-const road=new THREE.Mesh(
- new THREE.PlaneGeometry(9,210),roadMaterial
-);
+// Road
+const road=new THREE.Mesh(new THREE.PlaneGeometry(9,210),roadMat);
 road.rotation.x=-Math.PI/2;
 road.position.set(0,0,-85);
-road.receiveShadow=true;
 scene.add(road);
-
-// Road edges
-for(const x of [-4.5,4.5]){
- box(x,.08,-85,.13,.15,210,mat(0x86c5b7));
-}
 
 // Lane lines
 let lines=[];
 for(let i=0;i<35;i++){
- for(const x of [-1.5,1.5]){
-  const m=box(x,.015,-i*5,.035,.02,2,mat(0xd9c9a5));
-  lines.push(m);
+ for(let x of [-1.5,1.5]){
+  lines.push(box(x,.02,-i*5,.05,.02,2,white));
  }
 }
 
-// Forest trees
+// Trees
 let trees=[];
-
-function makeTree(x,z){
+function tree(x,z){
  const g=new THREE.Group();
-
- const trunk=new THREE.Mesh(
-  new THREE.CylinderGeometry(.17,.27,3,8),bark
- );
- trunk.position.y=1.5;
- trunk.castShadow=true;
- g.add(trunk);
-
- for(let i=0;i<4;i++){
-  const crown=new THREE.Mesh(
-   new THREE.SphereGeometry(1.1-i*.12,12,10),
-   [green1,green2,green3][i%3]
-  );
-  crown.position.set(
-   (Math.random()-.5)*.6,
-   2.8+i*.22,
-   (Math.random()-.5)*.6
-  );
-  crown.scale.set(1.2,1,.9);
-  crown.castShadow=true;
-  g.add(crown);
- }
-
+ box(0,1.2,0,.35,2.4,.35,brown,g);
+ const crown=new THREE.Mesh(new THREE.SphereGeometry(1.2,10,8),leaves);
+ crown.position.y=2.7;
+ g.add(crown);
  g.position.set(x,0,z);
  scene.add(g);
  trees.push(g);
 }
-
 for(let i=0;i<55;i++){
- let z=-i*4;
- makeTree(-6-Math.random()*3,z);
- makeTree(6+Math.random()*3,z);
+ tree(-6,-i*4);
+ tree(6,-i*4);
 }
 
-// Distant hills
-for(let i=0;i<12;i++){
- const hill=new THREE.Mesh(
-  new THREE.SphereGeometry(1,12,10),
-  mat(0x649c60)
- );
- hill.scale.set(12+Math.random()*8,5+Math.random()*6,5);
- hill.position.set(-65+i*12,-1,-100);
- scene.add(hill);
-}
+// CAR
+const car=new THREE.Group();
+scene.add(car);
+car.position.set(0,0,3);
 
-// Player
-const player=new THREE.Group();
-scene.add(player);
-player.position.set(0,0,3);
+const red=material(0xd71920);
+const dark=material(0x20242a);
+const glass=material(0x5babc9);
+const tire=material(0x111111);
 
-let mixer=null;
-let runAction=null;
-let modelLoaded=false;
+// Car body
+box(0,.65,0,1.65,.55,3,red,car);
+box(0,1.15,-.25,1.3,.65,1.45,glass,car);
 
-function fallbackPlayer(){
- const body=new THREE.Mesh(
-  new THREE.CapsuleGeometry(.3,.9,4,8),
-  mat(0xe36c42)
- );
- body.position.y=1.05;
- player.add(body);
+// Bonnet
+box(0,.92,1,1.5,.2,.8,red,car);
 
- const head=new THREE.Mesh(
-  new THREE.SphereGeometry(.25,12,12),
-  mat(0xe9aa83)
- );
- head.position.y=1.85;
- player.add(head);
-}
+// Bumpers
+box(0,.45,1.56,1.65,.18,.16,dark,car);
+box(0,.45,-1.56,1.65,.18,.16,dark,car);
 
-// Real animated 3D human model
-const loader=new GLTFLoader();
-
-loader.load(
- "https://threejs.org/examples/models/gltf/Soldier.glb",
- gltf=>{
-  const model=gltf.scene;
-  model.scale.setScalar(1);
-  model.position.y=0;
-  model.rotation.y=Math.PI;
-  model.traverse(o=>{
-   if(o.isMesh){
-    o.castShadow=true;
-    o.receiveShadow=true;
-   }
-  });
-  player.add(model);
-  mixer=new THREE.AnimationMixer(model);
-
-  const clip=gltf.animations.find(a=>a.name==="Run")
-          ||gltf.animations[0];
-
-  if(clip){
-   runAction=mixer.clipAction(clip);
-   runAction.play();
-  }
-
-  modelLoaded=true;
-  document.getElementById("loading").style.display="none";
- },
- undefined,
- ()=>{
-  fallbackPlayer();
-  document.getElementById("loading").innerText=
-  "3D model unavailable - using backup character";
-  setTimeout(()=>{
-   document.getElementById("loading").style.display="none";
-  },2500);
+// Wheels
+let wheels=[];
+for(let x of [-.9,.9]){
+ for(let z of [-1,1]){
+  const w=new THREE.Mesh(
+   new THREE.CylinderGeometry(.36,.36,.22,16),
+   tire
+  );
+  w.rotation.z=Math.PI/2;
+  w.position.set(x,.35,z);
+  car.add(w);
+  wheels.push(w);
  }
-);
+}
+
+// Headlights
+for(let x of [-.5,.5]){
+ box(x,.75,1.53,.3,.18,.05,material(0xffffaa),car);
+}
 
 // Obstacles
 let obstacles=[];
-let coinsList=[];
-
-const rockMat=mat(0x77776c);
-const coinMat=new THREE.MeshStandardMaterial({
- color:0xffd52a,metalness:.7,roughness:.2
-});
-
-function spawnRock(){
+function spawnObstacle(){
  const g=new THREE.Group();
  const rock=new THREE.Mesh(
-  new THREE.DodecahedronGeometry(.65,1),rockMat
+  new THREE.DodecahedronGeometry(.65),
+  material(0x777777)
  );
- rock.scale.set(1,.8,1);
- rock.position.y=.5;
- rock.castShadow=true;
+ rock.position.y=.6;
  g.add(rock);
  g.position.set([-3,0,3][Math.floor(Math.random()*3)],0,-100);
  scene.add(g);
  obstacles.push(g);
 }
 
+// Coins
+let coinsList=[];
 function spawnCoin(){
  const g=new THREE.Group();
- const coin=new THREE.Mesh(
-  new THREE.TorusGeometry(.42,.13,12,24),coinMat
+ const c=new THREE.Mesh(
+  new THREE.TorusGeometry(.4,.12,10,24),
+  new THREE.MeshStandardMaterial({color:0xffd21c,metalness:.7})
  );
- coin.position.y=1.2;
- coin.castShadow=true;
- g.add(coin);
-
+ c.position.y=1.1;
+ g.add(c);
  g.position.set([-3,0,3][Math.floor(Math.random()*3)],0,-100);
  scene.add(g);
  coinsList.push(g);
 }
 
-// Game
+// Game variables
 let lane=0;
-let jumpY=0;
-let jumpVelocity=0;
-let score=0;
-let coinCount=0;
-let distance=0;
-let speed=20;
-let active=true;
-let over=false;
-let rockTimer=0;
-let coinTimer=0;
+let speed=0;
+const maxSpeed=100;
+let distance=0,score=0,coins=0;
+let playing=true,ended=false;
+let spawnTime=0,coinTime=0;
+let braking=false;
 
-function left(){
- if(active&&!over)lane=Math.max(-1,lane-1);
-}
-function right(){
- if(active&&!over)lane=Math.min(1,lane+1);
-}
-function doJump(){
- if(active&&!over&&jumpY===0)jumpVelocity=11;
-}
+function left(){if(playing&&!ended)lane=Math.max(-1,lane-1)}
+function right(){if(playing&&!ended)lane=Math.min(1,lane+1)}
 
 document.getElementById("left").onclick=left;
 document.getElementById("right").onclick=right;
-document.getElementById("jump").onclick=doJump;
+
+document.getElementById("brake").ontouchstart=()=>braking=true;
+document.getElementById("brake").ontouchend=()=>braking=false;
+document.getElementById("brake").onmousedown=()=>braking=true;
+document.getElementById("brake").onmouseup=()=>braking=false;
+document.getElementById("brake").onmouseleave=()=>braking=false;
 
 document.getElementById("pause").onclick=()=>{
- if(over)return;
- active=!active;
- document.getElementById("pause").innerText=
- active?"Ⅱ PAUSE":"▶ PLAY";
+ if(ended)return;
+ playing=!playing;
+ document.getElementById("pause").innerText=playing?"Ⅱ":"▶";
  clock.getDelta();
 };
 
 window.addEventListener("keydown",e=>{
  if(e.key==="ArrowLeft")left();
  if(e.key==="ArrowRight")right();
- if(e.key==="ArrowUp"||e.key===" ")doJump();
+ if(e.key==="ArrowDown")braking=true;
+});
+window.addEventListener("keyup",e=>{
+ if(e.key==="ArrowDown")braking=false;
 });
 
-// Swipe controls
-let startX=0,startY=0;
-renderer.domElement.addEventListener("touchstart",e=>{
- startX=e.touches[0].clientX;
- startY=e.touches[0].clientY;
-},{passive:true});
-
-renderer.domElement.addEventListener("touchend",e=>{
- let dx=e.changedTouches[0].clientX-startX;
- let dy=e.changedTouches[0].clientY-startY;
- if(Math.abs(dx)>35){
-  dx<0?left():right();
- }
- if(dy<-35)doJump();
-},{passive:true});
-
-function gameOver(){
- over=true;
- active=false;
+function crash(){
+ ended=true;
+ playing=false;
  document.getElementById("final").innerText=score;
  document.getElementById("over").style.display="block";
 }
@@ -384,15 +247,12 @@ function restart(){
  coinsList.forEach(o=>scene.remove(o));
  obstacles=[];
  coinsList=[];
-
- lane=0;jumpY=0;jumpVelocity=0;
- score=0;coinCount=0;distance=0;
- speed=20;rockTimer=0;coinTimer=0;
- player.position.set(0,0,3);
- over=false;active=true;
-
+ lane=0;speed=0;distance=0;score=0;coins=0;
+ spawnTime=0;coinTime=0;
+ car.position.set(0,0,3);
+ ended=false;playing=true;
  document.getElementById("over").style.display="none";
- document.getElementById("pause").innerText="Ⅱ PAUSE";
+ document.getElementById("pause").innerText="Ⅱ";
  clock.getDelta();
 }
 window.restart=restart;
@@ -400,65 +260,65 @@ window.restart=restart;
 const clock=new THREE.Clock();
 
 function update(dt){
- if(!active||over)return;
+ if(!playing||ended)return;
 
- distance+=speed*dt;
- speed=Math.min(20+distance*.025,45);
+ // Speed gradually increases
+ if(!braking){
+  speed=Math.min(speed+4*dt,maxSpeed);
+ }else{
+  speed=Math.max(speed-35*dt,0);
+ }
+
+ // Distance
+ const moveSpeed=speed*.25;
+ distance+=moveSpeed*dt;
  score=Math.floor(distance);
 
- // Player movement
- player.position.x=THREE.MathUtils.lerp(
-  player.position.x,lane*3,dt*10
+ // Car movement
+ car.position.x=THREE.MathUtils.lerp(car.position.x,lane*3,dt*7);
+ car.rotation.z=THREE.MathUtils.lerp(
+  car.rotation.z,-(lane*3-car.position.x)*.08,dt*5
  );
 
- // Jump
- jumpVelocity-=25*dt;
- jumpY+=jumpVelocity*dt;
- if(jumpY<0){jumpY=0;jumpVelocity=0}
- player.position.y=jumpY;
+ // Wheel animation
+ wheels.forEach(w=>w.rotation.x+=moveSpeed*dt*2);
 
- if(mixer)mixer.update(dt);
+ // Camera follow
+ camera.position.x=THREE.MathUtils.lerp(camera.position.x,car.position.x*.3,dt*3);
+ camera.lookAt(car.position.x*.3,1,-10);
 
- // Move world
+ // World
  lines.forEach(m=>{
-  m.position.z+=speed*dt;
+  m.position.z+=moveSpeed*dt;
   if(m.position.z>12)m.position.z-=175;
  });
 
  trees.forEach(t=>{
-  t.position.z+=speed*dt;
+  t.position.z+=moveSpeed*dt;
   if(t.position.z>15)t.position.z=-205;
  });
 
- // Camera follows
- camera.position.x=THREE.MathUtils.lerp(
-  camera.position.x,player.position.x*.35,dt*3
- );
- camera.position.y=5.1+jumpY*.1;
- camera.lookAt(player.position.x*.35,1.1,-8);
-
  // Spawn
- rockTimer+=dt;
- coinTimer+=dt;
+ spawnTime+=dt;
+ coinTime+=dt;
 
- if(rockTimer>1.6){
-  spawnRock();
-  rockTimer=0;
+ if(spawnTime>1.5){
+  spawnObstacle();
+  spawnTime=0;
  }
- if(coinTimer>1.1){
+ if(coinTime>1.2){
   spawnCoin();
-  coinTimer=0;
+  coinTime=0;
  }
 
  // Obstacles
  for(let i=obstacles.length-1;i>=0;i--){
   const o=obstacles[i];
-  o.position.z+=speed*dt;
+  o.position.z+=moveSpeed*dt;
 
-  if(Math.abs(o.position.z-3)<.9&&
-     Math.abs(o.position.x-player.position.x)<1.1&&
-     jumpY<.85){
-   gameOver();
+  if(Math.abs(o.position.z-3)<1&&
+     Math.abs(o.position.x-car.position.x)<1.2){
+   crash();
   }
 
   if(o.position.z>12){
@@ -470,12 +330,12 @@ function update(dt){
  // Coins
  for(let i=coinsList.length-1;i>=0;i--){
   const c=coinsList[i];
-  c.position.z+=speed*dt;
+  c.position.z+=moveSpeed*dt;
   c.rotation.y+=dt*4;
 
   if(Math.abs(c.position.z-3)<1&&
-     Math.abs(c.position.x-player.position.x)<1.1){
-   coinCount++;
+     Math.abs(c.position.x-car.position.x)<1.2){
+   coins++;
    score+=10;
    scene.remove(c);
    coinsList.splice(i,1);
@@ -489,10 +349,9 @@ function update(dt){
  }
 
  document.getElementById("score").innerText=score;
- document.getElementById("distance").innerText=
- Math.floor(distance)+" m";
- document.getElementById("coins").innerText=coinCount;
- document.getElementById("speed").innerText=Math.floor(speed);
+ document.getElementById("distance").innerText=Math.floor(distance)+" m";
+ document.getElementById("coins").innerText=coins;
+ document.getElementById("speed").innerText=Math.floor(speed)+" km/h";
 }
 
 function animate(){
