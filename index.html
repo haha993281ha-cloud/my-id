@@ -1,158 +1,513 @@
 
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Website</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Real Forest Run 3D</title>
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;font-family:Arial,sans-serif;
-  background:linear-gradient(135deg,#10172e,#253e70);
-  color:white;min-height:100vh
-}
-nav{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:18px;background:#111a30
-}
-.logo{font-size:22px;font-weight:bold;color:#75a7ff}
-button{
-  padding:12px 18px;border:0;border-radius:9px;
-  background:#477bff;color:white;font-weight:bold;
-  cursor:pointer
-}
-nav button{padding:9px 12px}
-.container{
-  width:90%;max-width:420px;margin:55px auto;
-  background:#17233e;padding:25px;border-radius:18px;
-  box-shadow:0 10px 35px #0005
-}
-h1{text-align:center}
-p{text-align:center;color:#bdcbea;line-height:1.6}
-input{
-  display:block;width:100%;padding:13px;margin:12px 0;
-  border:1px solid #435477;border-radius:9px;
-  background:#0d172b;color:white;font-size:16px
-}
-.full{width:100%;margin-top:10px}
-a{color:#8eb5ff;cursor:pointer}
-.hidden{display:none}
-.hero{text-align:center;padding-top:35px}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:25px}
-.card{background:#233455;padding:18px;border-radius:12px;text-align:center}
-.message{text-align:center;color:#ffcc8b;font-size:14px}
+body{margin:0;overflow:hidden;background:#80cfff;font-family:Arial;touch-action:none}
+canvas{display:block}
+#hud{position:absolute;top:10px;left:2%;width:96%;display:flex;justify-content:space-around;background:#063e53dd;color:white;padding:12px 2px;border-radius:12px;font-size:12px;font-weight:bold}
+#hud span{display:block;color:#ffe34b;font-size:19px;margin-top:5px}
+button{border:0;border-radius:13px;padding:17px 23px;background:#087ba9;color:white;font-size:20px;font-weight:bold}
+#controls{position:absolute;bottom:20px;width:100%;display:flex;justify-content:space-between;padding:0 15px}
+#jump{background:#ff851a}
+#pause{position:absolute;right:12px;top:83px;padding:10px;font-size:14px}
+#over{display:none;position:absolute;top:35%;left:10%;width:80%;background:#102f27;color:white;text-align:center;padding:25px;border-radius:15px}
+#over button{background:#ff851a}
+#loading{position:absolute;top:48%;width:100%;text-align:center;color:#063e53;font-weight:bold}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">MyWebsite</div>
-  <button onclick="showPage('home')">Home</button>
-</nav>
+<div id="hud">
+<div>SCORE<span id="score">0</span></div>
+<div>DISTANCE<span id="distance">0 m</span></div>
+<div>COINS<span id="coins">0</span></div>
+<div>SPEED<span id="speed">20</span></div>
+</div>
 
-<!-- LOGIN PAGE -->
-<section id="login" class="container">
-  <h1>Welcome Back 👋</h1>
-  <p>তোমার অ্যাকাউন্টে Login করো</p>
-  <form id="loginForm">
-    <input id="loginUser" placeholder="Username" required>
-    <input id="loginPass" type="password" placeholder="Password" required>
-    <button class="full" type="submit">Login</button>
-  </form>
-  <p>অ্যাকাউন্ট নেই? <a onclick="showPage('register')">Register করো</a></p>
-  <div id="loginMsg" class="message"></div>
-</section>
+<button id="pause">Ⅱ PAUSE</button>
 
-<!-- REGISTER PAGE -->
-<section id="register" class="container hidden">
-  <h1>Create Account ✨</h1>
-  <p>নতুন অ্যাকাউন্ট তৈরি করো</p>
-  <form id="registerForm">
-    <input id="regUser" placeholder="Username" required minlength="3">
-    <input id="regEmail" type="email" placeholder="Email" required>
-    <input id="regPass" type="password" placeholder="Password (কমপক্ষে ৬ অক্ষর)" required minlength="6">
-    <button class="full" type="submit">Register</button>
-  </form>
-  <p>আগে অ্যাকাউন্ট আছে? <a onclick="showPage('login')">Login করো</a></p>
-  <div id="registerMsg" class="message"></div>
-</section>
+<div id="controls">
+<div>
+<button id="left">◀</button>
+<button id="right">▶</button>
+</div>
+<button id="jump">JUMP ↑</button>
+</div>
 
-<!-- MAIN PAGE -->
-<section id="home" class="container hidden">
-  <div class="hero">
-    <h1>My Main Page 🚀</h1>
-    <p id="welcomeText">তোমার নিজের ওয়েবসাইটে স্বাগতম!</p>
-  </div>
-  <div class="cards">
-    <div class="card">👤<h3>Profile</h3><p>তোমার অ্যাকাউন্ট</p></div>
-    <div class="card">🌐<h3>Website</h3><p>তোমার ডিজিটাল জগৎ</p></div>
-  </div>
-  <button class="full" onclick="logout()">Logout</button>
-</section>
+<div id="loading">Loading Forest World...</div>
 
-<script>
-function showPage(page){
-  document.querySelectorAll('section').forEach(s=>s.classList.add('hidden'));
-  document.getElementById(page).classList.remove('hidden');
+<div id="over">
+<h1>GAME OVER!</h1>
+<h2>Score: <span id="final">0</span></h2>
+<button onclick="restart()">RESTART</button>
+</div>
+
+<script type="importmap">
+{
+ "imports":{
+ "three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+ "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+ }
+}
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x8bd8ff);
+scene.fog=new THREE.Fog(0x8bd8ff,35,125);
+
+const camera=new THREE.PerspectiveCamera(
+65,innerWidth/innerHeight,.1,200
+);
+camera.position.set(0,5,9);
+camera.lookAt(0,1,-8);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.15;
+document.body.appendChild(renderer.domElement);
+
+// Lighting
+scene.add(new THREE.HemisphereLight(0xc8eaff,0x42612d,2));
+
+const sunlight=new THREE.DirectionalLight(0xfff0d0,3);
+sunlight.position.set(-15,25,12);
+sunlight.castShadow=true;
+sunlight.shadow.mapSize.set(1024,1024);
+scene.add(sunlight);
+
+const mat=(c)=>new THREE.MeshStandardMaterial({color:c});
+
+const grass=mat(0x438b3c);
+const dirt=mat(0x98704b);
+const bark=mat(0x56351e);
+const green1=mat(0x126b32);
+const green2=mat(0x258d40);
+const green3=mat(0x3c9b43);
+
+function box(x,y,z,w,h,d,material){
+ const m=new THREE.Mesh(
+  new THREE.BoxGeometry(w,h,d),material
+ );
+ m.position.set(x,y,z);
+ m.castShadow=true;
+ m.receiveShadow=true;
+ scene.add(m);
+ return m;
 }
 
-function getUsers(){
-  try{return JSON.parse(localStorage.getItem('demoUsers')||'[]')}
-  catch(e){return []}
+// Procedural ground texture
+function makeTexture(){
+ const c=document.createElement("canvas");
+ c.width=c.height=256;
+ const ctx=c.getContext("2d");
+ ctx.fillStyle="#98734e";
+ ctx.fillRect(0,0,256,256);
+ for(let i=0;i<2500;i++){
+  ctx.fillStyle=Math.random()>.5?"#80603f":"#b18b60";
+  ctx.globalAlpha=Math.random()*.35;
+  ctx.fillRect(Math.random()*256,Math.random()*256,2,2);
+ }
+ ctx.globalAlpha=1;
+ const t=new THREE.CanvasTexture(c);
+ t.wrapS=t.wrapT=THREE.RepeatWrapping;
+ t.repeat.set(1,20);
+ return t;
 }
 
-document.getElementById('registerForm').addEventListener('submit',function(e){
-  e.preventDefault();
-  const username=document.getElementById('regUser').value.trim();
-  const email=document.getElementById('regEmail').value.trim();
-  const password=document.getElementById('regPass').value;
-  const users=getUsers();
+// Ground and road
+const ground=new THREE.Mesh(
+ new THREE.PlaneGeometry(250,250),grass
+);
+ground.rotation.x=-Math.PI/2;
+ground.position.set(0,-.15,-80);
+ground.receiveShadow=true;
+scene.add(ground);
 
-  if(users.some(u=>u.username.toLowerCase()===username.toLowerCase())){
-    document.getElementById('registerMsg').textContent='এই Username আগে ব্যবহার করা হয়েছে।';
-    return;
-  }
-
-  users.push({username,email,password});
-  localStorage.setItem('demoUsers',JSON.stringify(users));
-  document.getElementById('registerMsg').textContent='Account তৈরি হয়েছে! এখন Login করো।';
-  document.getElementById('registerForm').reset();
-  setTimeout(()=>showPage('login'),700);
+const roadMaterial=new THREE.MeshStandardMaterial({
+ map:makeTexture(),roughness:1
 });
+const road=new THREE.Mesh(
+ new THREE.PlaneGeometry(9,210),roadMaterial
+);
+road.rotation.x=-Math.PI/2;
+road.position.set(0,0,-85);
+road.receiveShadow=true;
+scene.add(road);
 
-document.getElementById('loginForm').addEventListener('submit',function(e){
-  e.preventDefault();
-  const username=document.getElementById('loginUser').value.trim();
-  const password=document.getElementById('loginPass').value;
-  const user=getUsers().find(u=>
-    u.username.toLowerCase()===username.toLowerCase()&&u.password===password
+// Road edges
+for(const x of [-4.5,4.5]){
+ box(x,.08,-85,.13,.15,210,mat(0x86c5b7));
+}
+
+// Lane lines
+let lines=[];
+for(let i=0;i<35;i++){
+ for(const x of [-1.5,1.5]){
+  const m=box(x,.015,-i*5,.035,.02,2,mat(0xd9c9a5));
+  lines.push(m);
+ }
+}
+
+// Forest trees
+let trees=[];
+
+function makeTree(x,z){
+ const g=new THREE.Group();
+
+ const trunk=new THREE.Mesh(
+  new THREE.CylinderGeometry(.17,.27,3,8),bark
+ );
+ trunk.position.y=1.5;
+ trunk.castShadow=true;
+ g.add(trunk);
+
+ for(let i=0;i<4;i++){
+  const crown=new THREE.Mesh(
+   new THREE.SphereGeometry(1.1-i*.12,12,10),
+   [green1,green2,green3][i%3]
   );
+  crown.position.set(
+   (Math.random()-.5)*.6,
+   2.8+i*.22,
+   (Math.random()-.5)*.6
+  );
+  crown.scale.set(1.2,1,.9);
+  crown.castShadow=true;
+  g.add(crown);
+ }
 
-  if(!user){
-    document.getElementById('loginMsg').textContent='Username অথবা Password ভুল।';
-    return;
+ g.position.set(x,0,z);
+ scene.add(g);
+ trees.push(g);
+}
+
+for(let i=0;i<55;i++){
+ let z=-i*4;
+ makeTree(-6-Math.random()*3,z);
+ makeTree(6+Math.random()*3,z);
+}
+
+// Distant hills
+for(let i=0;i<12;i++){
+ const hill=new THREE.Mesh(
+  new THREE.SphereGeometry(1,12,10),
+  mat(0x649c60)
+ );
+ hill.scale.set(12+Math.random()*8,5+Math.random()*6,5);
+ hill.position.set(-65+i*12,-1,-100);
+ scene.add(hill);
+}
+
+// Player
+const player=new THREE.Group();
+scene.add(player);
+player.position.set(0,0,3);
+
+let mixer=null;
+let runAction=null;
+let modelLoaded=false;
+
+function fallbackPlayer(){
+ const body=new THREE.Mesh(
+  new THREE.CapsuleGeometry(.3,.9,4,8),
+  mat(0xe36c42)
+ );
+ body.position.y=1.05;
+ player.add(body);
+
+ const head=new THREE.Mesh(
+  new THREE.SphereGeometry(.25,12,12),
+  mat(0xe9aa83)
+ );
+ head.position.y=1.85;
+ player.add(head);
+}
+
+// Real animated 3D human model
+const loader=new GLTFLoader();
+
+loader.load(
+ "https://threejs.org/examples/models/gltf/Soldier.glb",
+ gltf=>{
+  const model=gltf.scene;
+  model.scale.setScalar(1);
+  model.position.y=0;
+  model.rotation.y=Math.PI;
+  model.traverse(o=>{
+   if(o.isMesh){
+    o.castShadow=true;
+    o.receiveShadow=true;
+   }
+  });
+  player.add(model);
+  mixer=new THREE.AnimationMixer(model);
+
+  const clip=gltf.animations.find(a=>a.name==="Run")
+          ||gltf.animations[0];
+
+  if(clip){
+   runAction=mixer.clipAction(clip);
+   runAction.play();
   }
 
-  sessionStorage.setItem('demoCurrentUser',user.username);
-  document.getElementById('welcomeText').textContent='স্বাগতম, '+user.username+'!';
-  document.getElementById('loginMsg').textContent='';
-  showPage('home');
+  modelLoaded=true;
+  document.getElementById("loading").style.display="none";
+ },
+ undefined,
+ ()=>{
+  fallbackPlayer();
+  document.getElementById("loading").innerText=
+  "3D model unavailable - using backup character";
+  setTimeout(()=>{
+   document.getElementById("loading").style.display="none";
+  },2500);
+ }
+);
+
+// Obstacles
+let obstacles=[];
+let coinsList=[];
+
+const rockMat=mat(0x77776c);
+const coinMat=new THREE.MeshStandardMaterial({
+ color:0xffd52a,metalness:.7,roughness:.2
 });
 
-function logout(){
-  sessionStorage.removeItem('demoCurrentUser');
-  document.getElementById('loginForm').reset();
-  showPage('login');
+function spawnRock(){
+ const g=new THREE.Group();
+ const rock=new THREE.Mesh(
+  new THREE.DodecahedronGeometry(.65,1),rockMat
+ );
+ rock.scale.set(1,.8,1);
+ rock.position.y=.5;
+ rock.castShadow=true;
+ g.add(rock);
+ g.position.set([-3,0,3][Math.floor(Math.random()*3)],0,-100);
+ scene.add(g);
+ obstacles.push(g);
 }
 
-const current=sessionStorage.getItem('demoCurrentUser');
-if(current){
-  document.getElementById('welcomeText').textContent='স্বাগতম, '+current+'!';
-  showPage('home');
-}else{
-  showPage('login');
+function spawnCoin(){
+ const g=new THREE.Group();
+ const coin=new THREE.Mesh(
+  new THREE.TorusGeometry(.42,.13,12,24),coinMat
+ );
+ coin.position.y=1.2;
+ coin.castShadow=true;
+ g.add(coin);
+
+ g.position.set([-3,0,3][Math.floor(Math.random()*3)],0,-100);
+ scene.add(g);
+ coinsList.push(g);
 }
+
+// Game
+let lane=0;
+let jumpY=0;
+let jumpVelocity=0;
+let score=0;
+let coinCount=0;
+let distance=0;
+let speed=20;
+let active=true;
+let over=false;
+let rockTimer=0;
+let coinTimer=0;
+
+function left(){
+ if(active&&!over)lane=Math.max(-1,lane-1);
+}
+function right(){
+ if(active&&!over)lane=Math.min(1,lane+1);
+}
+function doJump(){
+ if(active&&!over&&jumpY===0)jumpVelocity=11;
+}
+
+document.getElementById("left").onclick=left;
+document.getElementById("right").onclick=right;
+document.getElementById("jump").onclick=doJump;
+
+document.getElementById("pause").onclick=()=>{
+ if(over)return;
+ active=!active;
+ document.getElementById("pause").innerText=
+ active?"Ⅱ PAUSE":"▶ PLAY";
+ clock.getDelta();
+};
+
+window.addEventListener("keydown",e=>{
+ if(e.key==="ArrowLeft")left();
+ if(e.key==="ArrowRight")right();
+ if(e.key==="ArrowUp"||e.key===" ")doJump();
+});
+
+// Swipe controls
+let startX=0,startY=0;
+renderer.domElement.addEventListener("touchstart",e=>{
+ startX=e.touches[0].clientX;
+ startY=e.touches[0].clientY;
+},{passive:true});
+
+renderer.domElement.addEventListener("touchend",e=>{
+ let dx=e.changedTouches[0].clientX-startX;
+ let dy=e.changedTouches[0].clientY-startY;
+ if(Math.abs(dx)>35){
+  dx<0?left():right();
+ }
+ if(dy<-35)doJump();
+},{passive:true});
+
+function gameOver(){
+ over=true;
+ active=false;
+ document.getElementById("final").innerText=score;
+ document.getElementById("over").style.display="block";
+}
+
+function restart(){
+ obstacles.forEach(o=>scene.remove(o));
+ coinsList.forEach(o=>scene.remove(o));
+ obstacles=[];
+ coinsList=[];
+
+ lane=0;jumpY=0;jumpVelocity=0;
+ score=0;coinCount=0;distance=0;
+ speed=20;rockTimer=0;coinTimer=0;
+ player.position.set(0,0,3);
+ over=false;active=true;
+
+ document.getElementById("over").style.display="none";
+ document.getElementById("pause").innerText="Ⅱ PAUSE";
+ clock.getDelta();
+}
+window.restart=restart;
+
+const clock=new THREE.Clock();
+
+function update(dt){
+ if(!active||over)return;
+
+ distance+=speed*dt;
+ speed=Math.min(20+distance*.025,45);
+ score=Math.floor(distance);
+
+ // Player movement
+ player.position.x=THREE.MathUtils.lerp(
+  player.position.x,lane*3,dt*10
+ );
+
+ // Jump
+ jumpVelocity-=25*dt;
+ jumpY+=jumpVelocity*dt;
+ if(jumpY<0){jumpY=0;jumpVelocity=0}
+ player.position.y=jumpY;
+
+ if(mixer)mixer.update(dt);
+
+ // Move world
+ lines.forEach(m=>{
+  m.position.z+=speed*dt;
+  if(m.position.z>12)m.position.z-=175;
+ });
+
+ trees.forEach(t=>{
+  t.position.z+=speed*dt;
+  if(t.position.z>15)t.position.z=-205;
+ });
+
+ // Camera follows
+ camera.position.x=THREE.MathUtils.lerp(
+  camera.position.x,player.position.x*.35,dt*3
+ );
+ camera.position.y=5.1+jumpY*.1;
+ camera.lookAt(player.position.x*.35,1.1,-8);
+
+ // Spawn
+ rockTimer+=dt;
+ coinTimer+=dt;
+
+ if(rockTimer>1.6){
+  spawnRock();
+  rockTimer=0;
+ }
+ if(coinTimer>1.1){
+  spawnCoin();
+  coinTimer=0;
+ }
+
+ // Obstacles
+ for(let i=obstacles.length-1;i>=0;i--){
+  const o=obstacles[i];
+  o.position.z+=speed*dt;
+
+  if(Math.abs(o.position.z-3)<.9&&
+     Math.abs(o.position.x-player.position.x)<1.1&&
+     jumpY<.85){
+   gameOver();
+  }
+
+  if(o.position.z>12){
+   scene.remove(o);
+   obstacles.splice(i,1);
+  }
+ }
+
+ // Coins
+ for(let i=coinsList.length-1;i>=0;i--){
+  const c=coinsList[i];
+  c.position.z+=speed*dt;
+  c.rotation.y+=dt*4;
+
+  if(Math.abs(c.position.z-3)<1&&
+     Math.abs(c.position.x-player.position.x)<1.1){
+   coinCount++;
+   score+=10;
+   scene.remove(c);
+   coinsList.splice(i,1);
+   continue;
+  }
+
+  if(c.position.z>12){
+   scene.remove(c);
+   coinsList.splice(i,1);
+  }
+ }
+
+ document.getElementById("score").innerText=score;
+ document.getElementById("distance").innerText=
+ Math.floor(distance)+" m";
+ document.getElementById("coins").innerText=coinCount;
+ document.getElementById("speed").innerText=Math.floor(speed);
+}
+
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),.04);
+ update(dt);
+ renderer.render(scene,camera);
+}
+animate();
+
+addEventListener("resize",()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
 </script>
 </body>
 </html>
